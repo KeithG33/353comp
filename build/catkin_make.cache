@@ -1,2 +1,0 @@
-competition_2019t2
--DCATKIN_DEVEL_PREFIX=/home/zack/353comp/devel -DCMAKE_INSTALL_PREFIX=/home/zack/353comp/install -G Unix Makefiles

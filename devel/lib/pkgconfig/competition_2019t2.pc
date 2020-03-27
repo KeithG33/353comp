@@ -1,8 +1,0 @@
-prefix=/home/zack/353comp/devel
-
-Name: competition_2019t2
-Description: Description of competition_2019t2
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/zack/353comp/devel/lib 
-Requires: 
