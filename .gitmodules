@@ -1,0 +1,3 @@
+[submodule "src/competition_2019t2"]
+	path = src/competition_2019t2
+	url = https://github.com/ENPH353/competition_2019t2.git

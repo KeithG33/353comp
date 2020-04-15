@@ -1,0 +1,14 @@
+.vscode
+*.jpeg
+*.jpg
+*.png
+imimation_pics/*
+devel/*
+CMake*
+devel
+build
+build/*
+.catkin_workspace
+src/CMakeLists.txt
+__pycache__
+
