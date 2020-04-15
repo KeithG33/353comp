@@ -1,23 +1,33 @@
 import cv2 
 import numpy as np 
 import os
-test_img_path = "testimgs/"
+test_img_path = "testimgs/ped/"
 
 
 class saftey_first:
 
     @staticmethod
-    def is_cw(img):
+    def is_cw(img, ret_x_pos=False):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         lower_red = np.array([0,200,100])
         upper_red = np.array([20,255,255])
         mask = cv2.inRange(hsv, lower_red, upper_red)
         cv2.imshow("mask", mask)
         cv2.waitKey(1000)
-        return np.sum(mask*1.0/255)>8000
+
+        if (np.sum(mask*1.0/255)<8000):
+            return False
 
 
-def test_detection(my_func):
+        if ret_x_pos == True:
+            x_min = np.min(np.where(mask==255))
+            x_max = np.max(np.where(mask==255))
+            return True, x_min, x_max
+        
+        return True
+
+
+def test_detection(my_func, test_img_path):
 
     true_negatives = 0
     img_dir = test_img_path+"/no/"
@@ -45,6 +55,8 @@ def test_detection(my_func):
 
     print (str(true_positivies)  + " out of " + str(len(os.listdir(test_img_path+"/yes"))) + " postives correct")
 
-#test1 = cv2.imread(test_img_path+'/yes/1.png')
-#saftey_first.is_cw(test1)
-test_detection(saftey_first.is_cw)
+
+if __name__ == "__main__":
+    test1 = cv2.imread(test_img_path+'/yes/1.png')
+    saftey_first.is_cw(test1, True)
+    test_detection(saftey_first.is_cw, test_img_path)
