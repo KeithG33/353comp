@@ -23,13 +23,16 @@ class no_vehicular_manslaughter:
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         return cv2.inRange(hsv, no_vehicular_manslaughter.lower_red,  no_vehicular_manslaughter.upper_red)
     @staticmethod 
-    def is_pd(img):
+    def is_pd(img, max_cw):
         mask = no_vehicular_manslaughter.make_mask(img)
-        # cv2.imshow("mask", mask)
-        # cv2.waitKey(1000)
+        cv2.imshow("mask", mask)
+        cv2.waitKey(1000)
 
+        head_pos =  no_vehicular_manslaughter.get_mean_head_pos(mask)
 
-        return np.sum(mask*1.0/255)>10 and no_vehicular_manslaughter.get_mean_head_pos(mask) > detec_cw.saftey_first.is_cw(img, True)[1]
+        #print (head_pos, max_cw)
+
+        return np.sum(mask)>0 and head_pos< max_cw
 
 
 

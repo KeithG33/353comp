@@ -18,6 +18,8 @@ class saftey_first:
         # cv2.waitKey(1000)
 
         if (np.sum(mask*1.0/255)<8000):
+            if ret_x_pos == True:
+                return False, None , None
             return False
 
 

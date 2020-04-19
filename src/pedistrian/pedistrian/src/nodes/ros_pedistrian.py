@@ -6,6 +6,7 @@ import rospy
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+import cv2
 
 class pd_dector:
 
@@ -24,7 +25,17 @@ class pd_dector:
         except CvBridgeError as e:
             print(e)
 
-        if saftey_first.is_cw(cv_image) and no_vehicular_manslaughter.is_pd(cv_image):
+        cv2.imshow("name",cv_image)
+        cv2.waitKey(25)
+
+        is_cw, cw_min, cw_max = saftey_first.is_cw(cv_image, True)
+
+        # print ("is cw:" + str(is_cw))
+        pd = no_vehicular_manslaughter.is_pd(cv_image, cw_max)
+        # print ("no pd: " + str(pd))
+
+
+        if is_cw and pd:
             self.pub_msg()
             self.last_sent_go = False
         
