@@ -15,12 +15,15 @@ import matplotlib.pyplot as plt
 last_error = 0
 Kp = 0.08
 Kd = 0.01
-cruising_speed = 0.15
+cruising_speed = 0.2
 current_portion = "first_straight"
 straight2_time = 0
 straight3_time = 0
 straight4_time = 0
 middle_time = 0
+last_portion = "first_straight"
+pedestrian = 0
+
 
 
 class get_yo_ass_in_lane():
@@ -28,56 +31,49 @@ class get_yo_ass_in_lane():
     def __init__(self):
         self.move_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=1)
         self.bridge = CvBridge()
-        self.image_sub = rospy.Subscriber("/rrbot/camera1/image_raw",Image,self.callback)
         self.move = Twist()
-    
+
     # Buncha helper functions first
     def lane_drive(self, error):
         global last_error
         turnspeed = Kp*error + Kd*(error - last_error)
         #centre of lane to the left
         if error > 0:
-            if error >= 40:
-                self.set_speeds(cruising_speed/1.5, turnspeed/40)
+            if error >= 45:
+                self.set_speeds(cruising_speed/20, turnspeed/18)
             else:
-                self.set_speeds(cruising_speed, turnspeed/15)
+                self.set_speeds(cruising_speed, turnspeed/12)
             last_error = error
         elif error < 0:
-            if error <= -40:
-                self.set_speeds(cruising_speed/1.5,turnspeed/40)
+            if error <= -45:
+                self.set_speeds(cruising_speed/20,turnspeed/18)
             else:
-                self.set_speeds(cruising_speed, turnspeed/15)
+                self.set_speeds(cruising_speed, turnspeed/12)
             last_error = error
 
     def right_turn(self):
-        self.move.linear.x = 0.15
-        self.move_pub.publish(self.move)
-        rospy.sleep(9.2)
-        self.move.linear.x = 0
-        self.move_pub.publish(self.move)
-        self.set_speeds(0,-0.48)
-        rospy.sleep(7.5)
-
-    def right_turn_2(self):
-        self.move.linear.x = 0.16
-        self.move_pub.publish(self.move)
-        rospy.sleep(7.1)
+        self.set_speeds(cruising_speed,0)
+        rospy.sleep(7)
         self.set_speeds(0,-0.6)
         rospy.sleep(5.8)
-    
+
+    def right_turn_2(self):
+        self.set_speeds(cruising_speed,0)
+        rospy.sleep(5.5)
+        self.set_speeds(0,-0.6)
+        rospy.sleep(5.8)
+
     def right_turn_3(self):
-        self.move.linear.x = 0.15
-        self.move_pub.publish(self.move)
-        rospy.sleep(8.4)
+        self.set_speeds(cruising_speed,0)
+        rospy.sleep(7.2)
         self.set_speeds(0,-0.6)
-        rospy.sleep(6.1)
-    
+        rospy.sleep(5.3)
+
     def right_turn_4(self):
-        self.set_speeds(0.15,0)
-        rospy.sleep(7.9)
-        self.set_speeds(0,0)
+        self.set_speeds(cruising_speed,0)
+        rospy.sleep(3.5)
         self.set_speeds(0,-0.6)
-        rospy.sleep(7.8)
+        rospy.sleep(7.4)
 
     def find_ROI(self, img):
         height = img.shape[0]
@@ -142,9 +138,19 @@ class get_yo_ass_in_lane():
         self.move.linear.x = linear
         self.move.angular.z = angular
         self.move_pub.publish(self.move)
-        
 
-# Stays in lane by detecting vertical lines on either side of road. Uses canny edge detection, 
+
+# If received data says "stop" then set current_portion = "pedestrian" and remember
+# what the last portion was
+    def stop_callback(self,data):
+        global pedestrian
+        if data == "stop":
+            self.set_speeds(0,0)
+            pedestrian = 1
+        else:
+            pedestrian = 0
+
+# Stays in lane by detecting vertical lines on either side of road. Uses canny edge detection,
 # then Hough Line transform to get slope and coordinates
 #
 # Uses a state variable for what part of course it's in (sorry Miti...)
@@ -160,6 +166,8 @@ class get_yo_ass_in_lane():
         global straight3_time
         global straight4_time
         global middle_time
+        global pedestrian
+        global cruising_turn_speed
 
         right = False
         left = False
@@ -172,14 +180,14 @@ class get_yo_ass_in_lane():
         canny = self.do_canny(cv_img)
         ROI = self.find_ROI(canny)
         hough = cv2.HoughLinesP(ROI, 3, np.pi / 180, 100, np.array([]), minLineLength = 50, maxLineGap = 5)
-   
+
 
         if hough is not None:
             lines = self.calculate_lines(cv_img, hough)
             lines_visualize = np.zeros_like(cv_img)
             x_sum = 0
-            # Checks if any lines are detected, average x's to draw dot 
-            if len(lines) != 0 or lines is not None or lines != []:
+            # Checks if any lines are detected, average x's to draw dot
+            if len(lines) != 0:
                 left_x_avg=0
                 right_x_avg = 0
                 if len(lines) == 2:
@@ -191,7 +199,7 @@ class get_yo_ass_in_lane():
                         right_x_avg = (x1+x2)/2
                     if both == False:
                         if x1 < width/2:
-                            left = True 
+                            left = True
                         elif x1 > width/2:
                             right = True
                     x_sum += x1
@@ -206,76 +214,83 @@ class get_yo_ass_in_lane():
 
             error = (setpoint - x_avg)/10
             if left_x_avg != 0:
-                left_error = (setpoint - (left_x_avg+215)) / 2 
-                print("LEFT error is....{}".format(left_error))
+                left_error = (setpoint - (left_x_avg+215)) / 2
+                #print("LEFT error is....{}".format(left_error))
             if right_x_avg != 0:
-                right_error = (setpoint - (right_x_avg-205)) / 2 
-                print("RIGHT error is....{}".format(right_error))
+                right_error = (setpoint - (right_x_avg-205)) / 2
+                #print("RIGHT error is....{}".format(right_error))
 
-            #centre of lane is to the left
             if current_portion == "first_straight":
                 self.lane_drive(left_error)
-                
                 if left == True:
                     now = rospy.get_time()
-                    if now > 35:
+                    if now > 20:
                         self.right_turn()
                         current_portion = "second_straight"
                         straight2_time = rospy.get_time()
-            elif current_portion == "second_straight":  
-                self.lane_drive(left_error)
-                if left == True:
-                    now = rospy.get_time()
-                    if now - straight2_time > 25:
-                        self.set_speeds(cruising_speed,0)
-                        self.right_turn_2()
-                        current_portion = "third_straight"
-                        straight3_time = rospy.get_time()
+            elif current_portion == "second_straight":
+                if pedestrian == 1:
+                    print "PEDESTRIAN IN THE WAY"
+                    self.set_speeds(0,0)
+                elif pedestrian == 0:
+                    self.lane_drive(left_error)
+                    if left == True:
+                        now = rospy.get_time()
+                        if now - straight2_time > 20:
+                            self.set_speeds(cruising_speed,0)
+                            self.right_turn_2()
+                            current_portion = "third_straight"
+                            straight3_time = rospy.get_time()
             elif current_portion == "third_straight":
                 self.lane_drive(left_error)
                 if left == True:
                     now = rospy.get_time()
-                    if now - straight3_time > 20:
+                    if now - straight3_time > 15:
                         self.set_speeds(cruising_speed,0)
                         self.right_turn_3()
                         current_portion = "fourth_straight"
-                        straight4_time = rospy.get_time()  
+                        straight4_time = rospy.get_time()
             elif current_portion == "fourth_straight":
-                self.lane_drive(left_error)
-                if left == True:
+                if pedestrian == 1:
+                    self.set_speeds(0,0)
+                elif pedestrian == 0:
                     self.lane_drive(left_error)
-                    now = rospy.get_time()
-                    if now - straight4_time > 10:
-                        self.set_speeds(cruising_speed,0)
-                        self.right_turn()
-                        current_portion = "middle"
-                        middle_time = rospy.get_time()
+                    if left == True:
+                        self.lane_drive(left_error)
+                        now = rospy.get_time()
+                        if now - straight4_time > 5:
+                            self.set_speeds(cruising_speed,0)
+                            self.right_turn()
+                            current_portion = "middle"
+                            middle_time = rospy.get_time()
             elif current_portion == "middle":
                 now = rospy.get_time()
                 if left == True:
-                    
                     self.lane_drive(left_error)
                 elif both == True:
                     self.lane_drive(error)
                 elif right == True:
                     self.lane_drive(right_error)
-                
-                if now - middle_time > 26: 
+
+                if now - middle_time > 20:
                     current_portion = "doneski"
             elif current_portion == "doneski":
                 print "made it"
                 self.set_speeds(0,-0.3)
 
 
-            
+
 def main(args):
-  driver = get_yo_ass_in_lane()
-  rospy.init_node('drive', anonymous=True)
-  try:
-    rospy.spin()
-  except KeyboardInterrupt:
-    print("Shutting down")
-  cv2.destroyAllWindows()
+    driver = get_yo_ass_in_lane()
+    rospy.init_node('drive', anonymous=True)
+    stop_sub = rospy.Subscriber("stop", String,driver.stop_callback)
+    image_sub = rospy.Subscriber("/rrbot/camera1/image_raw",Image,driver.callback)
+
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        print("Shutting down")
+        cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main(sys.argv)
