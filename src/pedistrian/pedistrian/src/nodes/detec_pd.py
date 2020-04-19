@@ -25,14 +25,14 @@ class no_vehicular_manslaughter:
     @staticmethod 
     def is_pd(img, max_cw):
         mask = no_vehicular_manslaughter.make_mask(img)
-        cv2.imshow("mask", mask)
-        cv2.waitKey(1000)
+        # cv2.imshow("mask", mask)
+        # cv2.waitKey(1000)
 
-        head_pos =  no_vehicular_manslaughter.get_mean_head_pos(mask)
+
 
         #print (head_pos, max_cw)
 
-        return np.sum(mask)>0 and head_pos< max_cw
+        return np.sum(mask)>0 and no_vehicular_manslaughter.get_mean_head_pos(mask)< max_cw
 
 
 
