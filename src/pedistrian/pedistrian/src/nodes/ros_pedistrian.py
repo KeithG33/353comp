@@ -15,6 +15,7 @@ class pd_dector:
         self.bridge = CvBridge()
         self.image_sub = rospy.Subscriber("/rrbot/camera1/image_raw",Image,self.callback)
         self.rate = rospy.Rate(10) # 10hz
+        self.last_sent_go = False
         rospy.spin()
 
     def callback(self,data):
@@ -25,9 +26,11 @@ class pd_dector:
 
         if saftey_first.is_cw(cv_image) and no_vehicular_manslaughter.is_pd(cv_image):
             self.pub_msg()
+            self.last_sent_go = False
         
-        else:
+        elif self.last_sent_go == False: 
             self.pub_msg("go")
+            self.last_sent_go = True
 
 
     def pub_msg(self, val="stop"):

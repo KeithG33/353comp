@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import cv2
 import numpy as np 
 import os
@@ -15,7 +16,7 @@ class no_vehicular_manslaughter:
 
     @staticmethod
     def get_mean_head_pos(mask):
-        return 0.5*(np.min(np.where(mask==255))+np.min(np.where(mask==255)))
+        return np.max(np.where(mask==255))
 
     @staticmethod
     def make_mask(img):
