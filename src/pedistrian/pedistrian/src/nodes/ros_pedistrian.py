@@ -25,8 +25,8 @@ class pd_dector:
         except CvBridgeError as e:
             print(e)
 
-        cv2.imshow("name",cv_image)
-        cv2.waitKey(25)
+        #cv2.imshow("name",cv_image)
+        #cv2.waitKey(25)
 
         is_cw, cw_min, cw_max = saftey_first.is_cw(cv_image, True)
 
