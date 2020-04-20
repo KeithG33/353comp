@@ -32,7 +32,7 @@ class no_vehicular_manslaughter:
 
         #print (head_pos, max_cw)
 
-        return np.sum(mask)>0 and no_vehicular_manslaughter.get_mean_head_pos(mask)< max_cw
+        return np.sum(mask)>0 and no_vehicular_manslaughter.get_mean_head_pos(mask)+20< max_cw
 
 
 

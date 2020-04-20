@@ -18,7 +18,7 @@ class boxgetter():
 
     def __init__(self, kernel_size = (10,1), cut_max = (200,200,50), cut_min=(0, 0,0), **kwargs):
 
-        self.send_number = 3
+        self.send_number = 8
         self.sent = 0
         self.kernel = np.ones(kernel_size, np.uint8)
         self.cut_max = cut_max
