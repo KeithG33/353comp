@@ -31,7 +31,7 @@ class plate_decoder():
 
         # [cv2.imshow(str(i), plates[i]) for i in range(len(plates))]
         # cv2.waitKey(1000)
-        return pytesseract.image_to_string(plate, config="--psm 7")
+        return pytesseract.image_to_string(plate)
 
 
     def get_image(self, data):
